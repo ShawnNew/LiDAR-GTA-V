@@ -9,6 +9,9 @@
 #pragma warning(disable : 4244 4305) // double <-> float conversions
 
 void notificationOnLeft(std::string notificationText) {
+	/*
+	Function to display notification on the screen.
+	*/
 	UI::_SET_NOTIFICATION_TEXT_ENTRY("CELL_EMAIL_BCON");
 	const int maxLen = 99;
 	for (int i = 0;i < notificationText.length(); i += maxLen) {
@@ -22,7 +25,8 @@ void notificationOnLeft(std::string notificationText) {
 }
 
 struct ray {
-	bool hit;
+
+	bool hit; //if the ray hit obstacle
 	Vector3 hitCoordinates;
 	Vector3 surfaceNormal;
 	std::string entityTypeName;
@@ -31,6 +35,16 @@ struct ray {
 };
 
 ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectFlags) {
+	/*
+	Function to get game object details.
+	Input:
+		source         :    coordinates of the camera
+		direction      :    direction of raycast in type of Vector3
+		maxDistance    :    maximum distance
+		intersectFlags :    whether the ray intersects
+	Output:
+		result         :    ray struct
+	*/
 	ray result;
 	float targetX = source.x + (direction.x * maxDistance);
 	float targetY = source.y + (direction.y * maxDistance);
@@ -70,6 +84,16 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 }
 
 ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ,int range){
+	/*
+	Function to calculate the offset angle of each ray. Output ray struct data.
+	Also, raycast function is invoked to get coordinates.
+	Input:
+		angleOffsetX   :    offset x
+		angleOffsetZ   :    offset y
+		range          :    range of the camera
+	Output:
+		result         :    ray result
+	*/
 	Vector3 rot = CAM::GET_GAMEPLAY_CAM_ROT(2);
 	double rotationX = (rot.x + angleOffsetX) * (M_PI / 180.0);
 	double rotationZ = (rot.z + angleOffsetZ) * (M_PI / 180.0);
@@ -78,13 +102,25 @@ ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ,int range){
 	direction.x = sin(rotationZ) * multiplyXY * -1;
 	direction.y = cos(rotationZ) * multiplyXY;
 	direction.z = sin(rotationX);
-	ray result = raycast(CAM::GET_GAMEPLAY_CAM_COORD(), direction, range, -1);
+	ray result = raycast(CAM::GET_GAMEPLAY_CAM_COORD(), direction, range, -1);  // get game object details.
 	return result;
 }
 
 void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertFovMax, double horiStep, double vertStep,int range,std::string filePath)
 {
-	GAMEPLAY::SET_GAME_PAUSED(true);
+	/*
+	Main function to collect lidar data.We can specify some parameters of the lidar and output the data in a particular path.
+	Input:
+		horiFovMin   :   minimum horizontal FOV
+		horiFovMax   :   maximum horizontal FOV
+		vertFovMin   :   minimum vertical FOV
+		vertFovMax   :   maximum vertical FOV
+		horiStep     :   horizontal steps
+		vertStep     :   vertical steps
+		range        :   range of the camera in meters
+		filePath     :   output file path
+	*/
+	GAMEPLAY::SET_GAME_PAUSED(true);  // pause the game
 	TIME::PAUSE_CLOCK(true);
 	double vertexCount = (horiFovMax - horiFovMin) * (1 / horiStep) * (vertFovMax - vertFovMin) * (1 / vertStep);
 	std::ofstream fileOutput;
@@ -98,7 +134,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			std::string entityName3 = "None";
 			int entityHash = 0;
 			unsigned char r = 0; unsigned char g = 0; unsigned char b = 0;
-			ray result = angleOffsetRaycast(x, z, range);
+			ray result = angleOffsetRaycast(x, z, range);  //function invoked to calculate the offset of each ray
 			if (result.hit)
 			{
 				r = 255; g = 255; b = 255;
@@ -124,7 +160,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		fileOutput << vertexData;
 	}
 	fileOutput.close();
-	GAMEPLAY::SET_GAME_PAUSED(false);
+	GAMEPLAY::SET_GAME_PAUSED(false);  //resume the game
 	TIME::PAUSE_CLOCK(false);
 	notificationOnLeft("LiDAR Point Cloud written to file.");
 }
@@ -134,7 +170,7 @@ void ScriptMain()
 	srand(GetTickCount());
 	while (true)
 	{
-		if (IsKeyJustUp(VK_F6))
+		if (IsKeyJustUp(VK_F6)) // monitor the key action
 		{
 			double parameters[6];
 			int range;
@@ -146,7 +182,8 @@ void ScriptMain()
 				notificationOnLeft("Input file not found. Please re-install the plugin.");
 				continue;
 			}
-			inputFile >> ignore >> ignore >> ignore >> ignore >> ignore;
+			// read configuration file
+			inputFile >> ignore >> ignore >> ignore >> ignore >> ignore; 
 			for (int i = 0; i < 6;i++) {
 				inputFile >> ignore >> ignore >> parameters[i];
 			}
